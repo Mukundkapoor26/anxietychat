@@ -2,11 +2,17 @@ name = "anxietychat"
 main = "./index.js"
 compatibility_date = "2025-04-04"
 
-# Use the Pages preset for proper asset binding
+# Make sure we have the Pages asset binding
 compatibility_flags = ["nodejs_compat"]
 
 [site]
 bucket = "./out"
 
 [build]
-command = "npm run build" 
+command = "npm run build"
+
+# Set headers for SPA routing
+[[headers]]
+for = "/*"
+[headers.set]
+Cache-Control = "public, max-age=0, must-revalidate" 
