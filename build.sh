@@ -28,36 +28,6 @@ if [ -d "public" ]; then
   cp -r public .next/standalone/
 fi
 
-# Create a _worker.js file for Cloudflare Pages
-cat > .next/standalone/_worker.js << 'EOL'
-import { createEventHandler } from '@cloudflare/next-on-pages';
-
-// The event handler for handling HTTP requests
-export const onRequest = createEventHandler({
-  // Optional: Specify the build output directory if different from '.next'
-  buildOutput: '.next',
-});
-EOL
-
-# Create an index.html file as a fallback
-cat > .next/standalone/index.html << 'EOL'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anxiety Chat</title>
-  <meta http-equiv="refresh" content="0;url=/app" />
-</head>
-<body>
-  <p>Redirecting to application...</p>
-  <script>
-    window.location.href = "/app";
-  </script>
-</body>
-</html>
-EOL
-
 # Create a routes.json file for Cloudflare Pages
 cat > .next/standalone/routes.json << 'EOL'
 {
@@ -65,10 +35,38 @@ cat > .next/standalone/routes.json << 'EOL'
   "include": ["/*"],
   "exclude": ["/_next/*", "/static/*"],
   "routes": [
-    { "src": "/", "dest": "/app" },
-    { "src": "/(.*)", "dest": "/app/$1" }
+    { "src": "/app", "dest": "/" },
+    { "src": "/app/(.*)", "dest": "/$1" }
   ]
 }
+EOL
+
+# Create a _redirects file for Cloudflare Pages
+cat > .next/standalone/_redirects << 'EOL'
+/app    /    301
+/app/*  /:splat    301
+EOL
+
+# Copy the server.js file to the root for Cloudflare Pages
+cp .next/standalone/server.js .next/standalone/index.js
+
+# Create a simple static HTML file for direct access
+cat > .next/standalone/404.html << 'EOL'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anxiety Chat</title>
+  <meta http-equiv="refresh" content="0;url=/" />
+</head>
+<body>
+  <p>Redirecting to application...</p>
+  <script>
+    window.location.href = "/";
+  </script>
+</body>
+</html>
 EOL
 
 echo "Build completed successfully"

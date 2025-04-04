@@ -56,21 +56,21 @@
   <div class="container">
     <h1>Welcome to Anxiety Chat</h1>
     <p>A supportive AI chat companion to help manage anxiety and stress.</p>
-    <a href="/app" class="button" id="startButton">Start Chatting</a>
+    <a href="/" class="button" id="startButton">Start Chatting</a>
     <div class="loading" id="loading" style="display: none;">Loading application...</div>
   </div>
 
   <script>
-    // Redirect to the app route
+    // Redirect to the root route
     document.getElementById('startButton').addEventListener('click', function(e) {
       e.preventDefault();
       document.getElementById('loading').style.display = 'block';
-      window.location.href = '/app';
+      window.location.href = '/';
     });
 
     // Auto-redirect after a short delay
     setTimeout(function() {
-      window.location.href = '/app';
+      window.location.href = '/';
     }, 2000);
   </script>
 </body>

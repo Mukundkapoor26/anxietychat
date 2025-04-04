@@ -3,15 +3,20 @@
 export async function onRequest({ request, next }) {
   const url = new URL(request.url);
   
-  // Handle root path
-  if (url.pathname === '/' || url.pathname === '') {
-    // Redirect to the app page
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': '/app',
-      },
-    });
+  // Handle /app path specifically
+  if (url.pathname === '/app' || url.pathname.startsWith('/app/')) {
+    // Rewrite to the root path
+    const newUrl = new URL(request.url);
+    newUrl.pathname = url.pathname.replace(/^\/app/, '');
+    
+    // If the new path is empty, set it to /
+    if (newUrl.pathname === '') {
+      newUrl.pathname = '/';
+    }
+    
+    // Create a new request with the modified URL
+    const newRequest = new Request(newUrl.toString(), request);
+    return next(newRequest);
   }
   
   // Continue to the next middleware or route handler
