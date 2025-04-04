@@ -41,6 +41,35 @@ type MessageLimitData = {
   resetTimestamp: number;
 }
 
+// Helper function to safely use localStorage
+const isBrowser = () => typeof window !== 'undefined';
+
+const getLocalStorage = (key: string, defaultValue: any = null) => {
+  if (!isBrowser()) return defaultValue;
+  try {
+    const value = localStorage.getItem(key);
+    if (value === null) return defaultValue;
+    return JSON.parse(value, (key, value) => {
+      if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
+        return value ? new Date(value) : undefined;
+      }
+      return value;
+    });
+  } catch (error) {
+    console.error(`Error reading localStorage key "${key}":`, error);
+    return defaultValue;
+  }
+};
+
+const setLocalStorage = (key: string, value: any) => {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error setting localStorage key "${key}":`, error);
+  }
+};
+
 export default function GhibliChat() {
   // State for the current chat session
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
@@ -81,47 +110,39 @@ export default function GhibliChat() {
 
   // Load chat sessions from localStorage on initial render
   useEffect(() => {
+    if (!isBrowser()) return;
+    
     try {
-      const storedSessions = localStorage.getItem("chatSessions")
+      const storedSessions = getLocalStorage("chatSessions", []);
       
-      if (storedSessions) {
-        // Parse the stored sessions and convert date strings back to Date objects
-        const parsedSessions = JSON.parse(storedSessions, (key, value) => {
-          if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-            return value ? new Date(value) : undefined
-          }
-          return value
-        })
+      if (Array.isArray(storedSessions) && storedSessions.length > 0) {
+        console.log("Loaded chat sessions:", storedSessions.length);
+        setChatSessions(storedSessions);
         
-        if (Array.isArray(parsedSessions) && parsedSessions.length > 0) {
-          console.log("Loaded chat sessions:", parsedSessions.length);
-          setChatSessions(parsedSessions)
-          
-          // Load the most recent chat if available
-          const mostRecentChat = parsedSessions.sort((a, b) => 
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          )[0]
-          
-          setCurrentChatId(mostRecentChat.id)
-          
-          // Make sure we set the full message history
-          if (mostRecentChat.messages && Array.isArray(mostRecentChat.messages)) {
-            setMessages([...mostRecentChat.messages])
-            console.log("Loaded messages for current chat:", mostRecentChat.messages.length);
-          }
+        // Load the most recent chat if available
+        const mostRecentChat = storedSessions.sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        
+        setCurrentChatId(mostRecentChat.id);
+        
+        // Make sure we set the full message history
+        if (mostRecentChat.messages && Array.isArray(mostRecentChat.messages)) {
+          setMessages([...mostRecentChat.messages]);
+          console.log("Loaded messages for current chat:", mostRecentChat.messages.length);
         }
       }
     } catch (error) {
-      console.error("Error loading chat sessions:", error)
+      console.error("Error loading chat sessions:", error);
     }
-  }, [])
+  }, []);
 
   // Save chat sessions to localStorage whenever they change
   useEffect(() => {
     if (chatSessions.length > 0) {
-      localStorage.setItem("chatSessions", JSON.stringify(chatSessions))
+      setLocalStorage("chatSessions", chatSessions);
     }
-  }, [chatSessions])
+  }, [chatSessions]);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -158,7 +179,7 @@ export default function GhibliChat() {
     
     // Update localStorage immediately
     const updatedSessions = [newChat, ...chatSessions];
-    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    setLocalStorage("chatSessions", updatedSessions);
     
     // Set as current chat and clear messages
     setCurrentChatId(newChatId)
@@ -200,7 +221,7 @@ export default function GhibliChat() {
     setChatSessions(updatedSessions);
     
     // Update localStorage immediately
-    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    setLocalStorage("chatSessions", updatedSessions);
     
     // If the deleted chat was the current one, switch to another chat or clear messages
     if (currentChatId === chatId) {
@@ -260,7 +281,8 @@ export default function GhibliChat() {
       setChatSessions(prev => [newChat, ...prev])
       
       // Save to localStorage immediately
-      localStorage.setItem("chatSessions", JSON.stringify([newChat]))
+      const updatedSessions = [newChat, ...chatSessions];
+      setLocalStorage("chatSessions", updatedSessions);
     } else {
       // Find current chat
       const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
@@ -292,7 +314,7 @@ export default function GhibliChat() {
       }
 
       // Save to local storage
-      localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessions))
+      setLocalStorage("chatSessions", updatedChatSessions)
     }
 
     // Scroll to bottom
@@ -369,7 +391,7 @@ export default function GhibliChat() {
         setChatSessions(updatedChatSessionsWithResponse);
         
         // Save to local storage
-        localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessionsWithResponse));
+        setLocalStorage("chatSessions", updatedChatSessionsWithResponse);
       }
       
       // Check limit after message sent
