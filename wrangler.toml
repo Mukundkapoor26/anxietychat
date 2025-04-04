@@ -2,5 +2,12 @@ name = "anxietychat"
 compatibility_date = "2025-04-04"
 main = "./index.js"
 
+# Send all static assets through the Pages platform
 [site]
-bucket = "./out" 
+bucket = "./out"
+
+# Enable the Pages asset binding
+[build]
+command = "npm run build"
+[build.upload]
+format = "pages" 
