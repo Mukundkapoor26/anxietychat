@@ -27,9 +27,8 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  // Add Cloudflare Pages specific configuration for Edge runtime
-  // This enables compatibility with Cloudflare Pages
-  output: 'standalone',
+  // Cloudflare Pages configuration
+  output: 'export',
 }
 
 if (userConfig) {

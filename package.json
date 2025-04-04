@@ -2,10 +2,13 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "rm -rf node_modules pnpm-lock.yaml package-lock.json && npm install",
+    "prebuild": "npm install",
     "start": "next start",
     "lint": "next lint"
   },
