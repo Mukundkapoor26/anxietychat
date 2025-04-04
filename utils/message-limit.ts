@@ -10,6 +10,16 @@ const RESET_TIME_KEY = 'anxiety-chat-reset-time';
 const SECRET_KEY = 'anxiety-chat-secure-v1'; // This is for simple obfuscation, not high security
 
 /**
+ * Helper function to safely access localStorage
+ */
+function getLocalStorage() {
+  if (typeof window !== 'undefined') {
+    return window.localStorage;
+  }
+  return null;
+}
+
+/**
  * Simple encryption to make localStorage manipulation harder
  * This isn't bulletproof security, but adds a barrier to casual manipulation
  */
@@ -53,6 +63,9 @@ function decrypt(encrypted: string | null): string | null {
  * Securely store a value in localStorage
  */
 function secureSet(key: string, value: string): void {
+  const localStorage = getLocalStorage();
+  if (!localStorage) return;
+  
   localStorage.setItem(key, encrypt(value));
 }
 
@@ -60,6 +73,9 @@ function secureSet(key: string, value: string): void {
  * Securely retrieve a value from localStorage
  */
 function secureGet(key: string): string | null {
+  const localStorage = getLocalStorage();
+  if (!localStorage) return null;
+  
   const encrypted = localStorage.getItem(key);
   return decrypt(encrypted);
 }
@@ -69,6 +85,8 @@ function secureGet(key: string): string | null {
  * Call this when app starts to ensure proper setup
  */
 export function initMessageLimit() {
+  if (typeof window === 'undefined') return 0;
+  
   // Check if we need to initialize or reset
   const resetTimeStr = secureGet(RESET_TIME_KEY);
   const now = new Date();
@@ -90,6 +108,8 @@ export function initMessageLimit() {
  * This is done at midnight each day
  */
 export function resetMessageCount() {
+  if (typeof window === 'undefined') return;
+  
   secureSet(MESSAGE_COUNT_KEY, '0');
   
   // Set reset time to next day at midnight
@@ -104,6 +124,7 @@ export function resetMessageCount() {
  * Get the current message count
  */
 export function getMessageCount(): number {
+  if (typeof window === 'undefined') return 0;
   return parseInt(secureGet(MESSAGE_COUNT_KEY) || '0', 10);
 }
 
@@ -112,6 +133,8 @@ export function getMessageCount(): number {
  * Returns the new count
  */
 export function incrementMessageCount(): number {
+  if (typeof window === 'undefined') return 0;
+  
   const currentCount = getMessageCount();
   secureSet(MESSAGE_COUNT_KEY, (currentCount + 1).toString());
   return currentCount + 1;
@@ -121,6 +144,7 @@ export function incrementMessageCount(): number {
  * Check if the user has reached their message limit
  */
 export function hasReachedLimit(): boolean {
+  if (typeof window === 'undefined') return false;
   return getMessageCount() >= MAX_MESSAGES_PER_DAY;
 }
 
@@ -128,6 +152,7 @@ export function hasReachedLimit(): boolean {
  * Get the number of remaining messages for today
  */
 export function getRemainingMessages(): number {
+  if (typeof window === 'undefined') return MAX_MESSAGES_PER_DAY;
   return Math.max(0, MAX_MESSAGES_PER_DAY - getMessageCount());
 }
 
@@ -136,6 +161,7 @@ export function getRemainingMessages(): number {
  * Only reveals counter after 5 messages have been used
  */
 export function shouldShowRemainingMessages(): boolean {
+  if (typeof window === 'undefined') return false;
   return getMessageCount() > 5;
 }
 
@@ -143,6 +169,8 @@ export function shouldShowRemainingMessages(): boolean {
  * Get the reset time (when message counts will reset)
  */
 export function getResetTime(): Date {
+  if (typeof window === 'undefined') return new Date();
+  
   const resetTimeStr = secureGet(RESET_TIME_KEY);
   if (!resetTimeStr) {
     // If no reset time exists, create one
@@ -156,6 +184,8 @@ export function getResetTime(): Date {
  * Get the milliseconds until the next reset
  */
 export function getMillisecondsUntilReset(): number {
+  if (typeof window === 'undefined') return 0;
+  
   const resetTime = getResetTime();
   const now = new Date();
   return Math.max(0, resetTime.getTime() - now.getTime());

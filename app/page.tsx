@@ -40,6 +40,14 @@ type MessageLimitData = {
   resetTimestamp: number;
 }
 
+// Helper function to safely access localStorage
+const getLocalStorage = () => {
+  if (typeof window !== 'undefined') {
+    return window.localStorage;
+  }
+  return null;
+};
+
 export default function GhibliChat() {
   // State for the current chat session
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
@@ -81,6 +89,9 @@ export default function GhibliChat() {
   // Load chat sessions from localStorage on initial render
   useEffect(() => {
     try {
+      const localStorage = getLocalStorage();
+      if (!localStorage) return;
+      
       const storedSessions = localStorage.getItem("chatSessions")
       
       if (storedSessions) {
@@ -117,6 +128,9 @@ export default function GhibliChat() {
 
   // Save chat sessions to localStorage whenever they change
   useEffect(() => {
+    const localStorage = getLocalStorage();
+    if (!localStorage) return;
+    
     if (chatSessions.length > 0) {
       localStorage.setItem("chatSessions", JSON.stringify(chatSessions))
     }
@@ -157,7 +171,10 @@ export default function GhibliChat() {
     
     // Update localStorage immediately
     const updatedSessions = [newChat, ...chatSessions];
-    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    const localStorage = getLocalStorage();
+    if (localStorage) {
+      localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    }
     
     // Set as current chat and clear messages
     setCurrentChatId(newChatId)
@@ -199,7 +216,10 @@ export default function GhibliChat() {
     setChatSessions(updatedSessions);
     
     // Update localStorage immediately
-    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    const localStorage = getLocalStorage();
+    if (localStorage) {
+      localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+    }
     
     // If the deleted chat was the current one, switch to another chat or clear messages
     if (currentChatId === chatId) {
@@ -259,7 +279,11 @@ export default function GhibliChat() {
       setChatSessions(prev => [newChat, ...prev])
       
       // Save to localStorage immediately
-      localStorage.setItem("chatSessions", JSON.stringify([newChat]))
+      const updatedSessions = [newChat, ...chatSessions];
+      const localStorage = getLocalStorage();
+      if (localStorage) {
+        localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
+      }
     } else {
       // Find current chat
       const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
@@ -291,7 +315,10 @@ export default function GhibliChat() {
       }
 
       // Save to local storage
-      localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessions))
+      const localStorage = getLocalStorage();
+      if (localStorage) {
+        localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessions));
+      }
     }
 
     // Scroll to bottom
@@ -368,7 +395,10 @@ export default function GhibliChat() {
         setChatSessions(updatedChatSessionsWithResponse);
         
         // Save to local storage
-        localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessionsWithResponse));
+        const localStorage = getLocalStorage();
+        if (localStorage) {
+          localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessionsWithResponse));
+        }
       }
       
       // Check limit after message sent
