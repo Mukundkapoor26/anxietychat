@@ -4,7 +4,6 @@ import { useRef, useEffect, useState } from "react"
 import { Send, Menu, X, Plus, Music, Volume2, VolumeX, MoreVertical, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
-import { format } from "date-fns"
 import { v4 as uuidv4 } from "uuid"
 import MessageLimitNotice, { MessageCounter } from "@/components/MessageLimitNotice"
 import { 
@@ -402,7 +401,11 @@ export default function GhibliChat() {
   // Format time as HH:MM AM/PM
   const formatTime = (date?: Date) => {
     if (!date) return "";
-    return format(date, "h:mm a");
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+    return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
   // Format date for chat list
@@ -419,11 +422,12 @@ export default function GhibliChat() {
     
     // If date is within current month, show day only
     if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-      return format(date, "d");
+      return date.getDate().toString();
     }
     
     // Otherwise show month and day
-    return format(date, "MMM d");
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${monthNames[date.getMonth()]} ${date.getDate()}`;
   };
 
   return (
