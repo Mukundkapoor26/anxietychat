@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react"
 import { Send, Menu, X, Plus, Music, Volume2, VolumeX, MoreVertical, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { format } from "date-fns"
 import { v4 as uuidv4 } from "uuid"
 import MessageLimitNotice, { MessageCounter } from "@/components/MessageLimitNotice"
 import { 
@@ -14,10 +15,6 @@ import {
   getRemainingMessages,
   shouldShowRemainingMessages
 } from "@/utils/message-limit"
-
-// Mark this page as dynamic (not statically generated)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // Define types for our chat data
 type Message = {
@@ -43,14 +40,6 @@ type MessageLimitData = {
   limitReached: boolean;
   resetTimestamp: number;
 }
-
-// Helper function to safely access localStorage
-const getLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    return window.localStorage;
-  }
-  return null;
-};
 
 export default function GhibliChat() {
   // State for the current chat session
@@ -93,9 +82,6 @@ export default function GhibliChat() {
   // Load chat sessions from localStorage on initial render
   useEffect(() => {
     try {
-      const localStorage = getLocalStorage();
-      if (!localStorage) return;
-      
       const storedSessions = localStorage.getItem("chatSessions")
       
       if (storedSessions) {
@@ -132,9 +118,6 @@ export default function GhibliChat() {
 
   // Save chat sessions to localStorage whenever they change
   useEffect(() => {
-    const localStorage = getLocalStorage();
-    if (!localStorage) return;
-    
     if (chatSessions.length > 0) {
       localStorage.setItem("chatSessions", JSON.stringify(chatSessions))
     }
@@ -175,10 +158,7 @@ export default function GhibliChat() {
     
     // Update localStorage immediately
     const updatedSessions = [newChat, ...chatSessions];
-    const localStorage = getLocalStorage();
-    if (localStorage) {
-      localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
-    }
+    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
     
     // Set as current chat and clear messages
     setCurrentChatId(newChatId)
@@ -220,10 +200,7 @@ export default function GhibliChat() {
     setChatSessions(updatedSessions);
     
     // Update localStorage immediately
-    const localStorage = getLocalStorage();
-    if (localStorage) {
-      localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
-    }
+    localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
     
     // If the deleted chat was the current one, switch to another chat or clear messages
     if (currentChatId === chatId) {
@@ -283,11 +260,7 @@ export default function GhibliChat() {
       setChatSessions(prev => [newChat, ...prev])
       
       // Save to localStorage immediately
-      const updatedSessions = [newChat, ...chatSessions];
-      const localStorage = getLocalStorage();
-      if (localStorage) {
-        localStorage.setItem("chatSessions", JSON.stringify(updatedSessions));
-      }
+      localStorage.setItem("chatSessions", JSON.stringify([newChat]))
     } else {
       // Find current chat
       const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
@@ -319,10 +292,7 @@ export default function GhibliChat() {
       }
 
       // Save to local storage
-      const localStorage = getLocalStorage();
-      if (localStorage) {
-        localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessions));
-      }
+      localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessions))
     }
 
     // Scroll to bottom
@@ -399,10 +369,7 @@ export default function GhibliChat() {
         setChatSessions(updatedChatSessionsWithResponse);
         
         // Save to local storage
-        const localStorage = getLocalStorage();
-        if (localStorage) {
-          localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessionsWithResponse));
-        }
+        localStorage.setItem("chatSessions", JSON.stringify(updatedChatSessionsWithResponse));
       }
       
       // Check limit after message sent
@@ -435,11 +402,7 @@ export default function GhibliChat() {
   // Format time as HH:MM AM/PM
   const formatTime = (date?: Date) => {
     if (!date) return "";
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-    return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    return format(date, "h:mm a");
   };
 
   // Format date for chat list
@@ -456,12 +419,11 @@ export default function GhibliChat() {
     
     // If date is within current month, show day only
     if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-      return date.getDate().toString();
+      return format(date, "d");
     }
     
     // Otherwise show month and day
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${monthNames[date.getMonth()]} ${date.getDate()}`;
+    return format(date, "MMM d");
   };
 
   return (

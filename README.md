@@ -24,22 +24,21 @@ A Next.js application that provides a supportive chat interface for anxiety mana
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Deployment to Cloudflare Pages
+## Deployment to Vercel
 
 1. Push your code to GitHub.
 
-2. Log in to your Cloudflare dashboard.
+2. Log in to your Vercel dashboard.
 
-3. Go to Pages and create a new project.
+3. Click "Add New..." and select "Project".
 
-4. Connect your GitHub repository.
+4. Import your GitHub repository.
 
-5. Configure the build settings:
-   - Build command: `npm run build`
-   - Build output directory: `.next`
+5. Configure the project settings:
+   - Framework Preset: Next.js
    - Environment variables: Add all variables from your `.env.local` file
 
-6. Deploy!
+6. Click "Deploy"!
 
 ## Technologies Used
 
