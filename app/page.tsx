@@ -513,20 +513,21 @@ export default function GhibliChat() {
       {/* Simplified Sidebar with glass effect */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full bg-ghibli-dark-green/70 backdrop-blur-md z-20 transition-all duration-300 ease-in-out overflow-y-auto",
+          "fixed top-0 left-0 h-full bg-ghibli-dark-green/70 backdrop-blur-md z-20 transition-all duration-300 ease-in-out overflow-y-auto", 
           sidebarOpen ? "w-72 opacity-100" : "w-0 opacity-0",
+          "max-w-[85vw]" // Limit sidebar width on small screens
         )}
       >
         <div className="p-6 pt-24 relative">
           {/* New Chat button */}
           <button 
             onClick={createNewChat}
-            className="flex items-center gap-3 text-ghibli-beige mb-8 hover:text-white transition-colors mt-4"
+            className="flex items-center gap-3 text-ghibli-beige mb-8 hover:text-white transition-colors mt-4 w-full"
           >
-            <div className="bg-ghibli-medium-green rounded-full p-1.5">
+            <div className="bg-ghibli-medium-green rounded-full p-1.5 flex-shrink-0">
               <Plus size={18} />
             </div>
-            <span className="font-copernicus text-lg">New chat</span>
+            <span className="font-copernicus text-lg truncate">New chat</span>
           </button>
 
           {/* Recents heading */}
@@ -538,21 +539,26 @@ export default function GhibliChat() {
               chatSessions.map((chat) => (
                 <div
                   key={chat.id}
-                  className={cn(
-                    "text-ghibli-beige font-copernicus cursor-pointer transition-colors py-1 group relative",
+                  className={cn("text-ghibli-beige font-copernicus cursor-pointer transition-colors py-1 group relative",
                     currentChatId === chat.id ? "text-white" : "hover:text-white"
                   )}
                 >
                   <div 
-                    onClick={() => switchChat(chat.id)}
+                    onClick={() => {
+                      switchChat(chat.id);
+                      // Close sidebar on mobile after selection
+                      if (window.innerWidth < 640) {
+                        setSidebarOpen(false);
+                      }
+                    }}
                     className="flex justify-between items-center pr-8"
                   >
-                    <span className="truncate">{chat.title}</span>
-                    <span className="text-xs font-medium ml-2 px-1.5 py-0.5 rounded bg-ghibli-medium-green/20">{formatDate(chat.updatedAt)}</span>
+                    <span className="truncate max-w-[70%]">{chat.title}</span>
+                    <span className="text-xs font-medium ml-2 px-1.5 py-0.5 rounded bg-ghibli-medium-green/20 flex-shrink-0">{formatDate(chat.updatedAt)}</span>
                   </div>
                   
                   {/* Three dots menu button */}
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -586,11 +592,14 @@ export default function GhibliChat() {
       </div>
 
       <main
-        className={cn("flex-1 flex flex-col relative z-10 transition-all duration-300", sidebarOpen ? "ml-72" : "ml-0")}
+        className={cn("flex-1 flex flex-col relative z-10 transition-all duration-300", 
+          sidebarOpen ? "sm:ml-72" : "ml-0", // Only apply margin on larger screens
+          "ml-0" // No margin on mobile
+        )}
       >
         {messages.length === 0 ? (
           // Welcome screen when no messages - centered vertically and horizontally
-          <div className="flex flex-col items-center justify-center h-screen p-4">
+          <div className="flex-1 flex flex-col items-center justify-center p-4 pt-16 sm:pt-4"> 
             <div className="flex flex-col items-center w-full max-w-xl">
               <h1 className="text-ghibli-dark-green text-4xl md:text-5xl font-copernicus font-medium tracking-tight text-center mb-10">
                 How Are You Feeling Today?
@@ -667,8 +676,8 @@ export default function GhibliChat() {
           // Chat interface when conversation has started
           <div className="flex-1 flex flex-col p-4 md:p-6 relative">
             {/* Chat messages */}
-            <div className="flex-1 overflow-auto pb-36">
-              <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex-1 overflow-auto pb-36 pt-16 sm:pt-4">
+              <div className="max-w-3xl mx-auto space-y-4 px-2"> {/* Added padding for small screens */}
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -678,8 +687,9 @@ export default function GhibliChat() {
                       className={cn(
                         "max-w-[80%] p-3 shadow-md backdrop-blur-sm font-copernicus relative",
                         message.role === "user"
-                          ? "bg-ghibli-light-green/80 border border-ghibli-medium-green/60 text-ghibli-dark-green chat-bubble-right"
-                          : "bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left",
+                          ? "ml-auto rounded-tl-xl rounded-bl-xl rounded-tr-sm bg-ghibli-medium-green/80 text-white"
+                          : "mr-auto rounded-tr-xl rounded-br-xl rounded-tl-sm bg-ghibli-beige-darker/80 text-ghibli-dark-green",
+                        "sm:max-w-[90%]" // Increase max width on small screens for better readability
                       )}
                     >
                       {message.content}
@@ -710,7 +720,7 @@ export default function GhibliChat() {
                 {/* Typing indicator */}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] p-4 shadow-md backdrop-blur-sm font-copernicus relative bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left">
+                    <div className="max-w-[80%] p-4 shadow-md backdrop-blur-sm font-copernicus relative bg-ghibli-beige-darker/80 text-ghibli-dark-green chat-bubble-left">
                       <div className="flex space-x-1.5 items-center min-h-[24px]">
                         <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '0ms' }}></div>
                         <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -729,8 +739,11 @@ export default function GhibliChat() {
             </div>
 
             {/* Input form - fixed at bottom with no gradient */}
-            <div className="fixed bottom-0 left-0 right-0 pb-4 px-4 md:px-6 z-10">
-              <div className="max-w-3xl mx-auto w-full relative">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-ghibli-beige-darker/50 to-transparent z-10">
+              <div className={cn("mx-auto max-w-3xl transition-all", 
+                sidebarOpen ? "sm:ml-72" : "ml-0", // Only apply margin on larger screens
+                "ml-0" // No margin on mobile
+              )}>
                 {/* Show message limit notice in chat mode */}
                 {showLimitNotice && (
                   <div className="mb-6">
@@ -741,10 +754,10 @@ export default function GhibliChat() {
                 {!showLimitNotice && (
                   <form onSubmit={handleSubmit}>
                     {/* Message count indicator positioned at top right of typing panel */}
-                    {shouldShowRemainingMessages() && (
-                      <div className="absolute -top-8 right-0">
+                    {shouldShowRemainingMessages() && !showLimitNotice && (
+                      <div className="fixed bottom-20 right-4 z-30 sm:bottom-4"> 
                         <div className="text-xs bg-ghibli-beige-darker/60 text-ghibli-dark-green/70 font-copernicus px-3 py-1 rounded-full backdrop-blur-sm">
-                          {10 - messageCount} message{10 - messageCount !== 1 ? 's' : ''} remaining today
+                          {getRemainingMessages()} message{getRemainingMessages() !== 1 ? 's' : ''} remaining today
                         </div>
                       </div>
                     )}
@@ -755,14 +768,15 @@ export default function GhibliChat() {
                           value={input}
                           onChange={handleInputChange}
                           placeholder="Share what's on your mind..."
-                          className="w-full py-5 px-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus"
+                          className="w-full py-3 sm:py-5 px-4 sm:px-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus"
+                          disabled={isLoading || showLimitNotice}
                         />
                         <button
                           type="submit"
-                          disabled={isLoading || !input.trim()}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-2.5 px-5 font-copernicus flex items-center gap-2"
+                          disabled={isLoading || !input.trim() || showLimitNotice}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-2 px-4 sm:py-2.5 sm:px-5 font-copernicus flex items-center gap-2"
                         >
-                          <span>Send</span>
+                          <span className="hidden sm:inline">Send</span>
                           <Send className="h-4 w-4" />
                         </button>
                       </div>
