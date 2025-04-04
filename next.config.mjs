@@ -17,12 +17,10 @@ const nextConfig = {
     appDocumentPreloading: false,
     serverComponentsExternalPackages: ['react', 'react-dom']
   },
-  // Explicitly mark all pages as dynamic
-  // This prevents Next.js from trying to prerender pages
-  exportPathMap: async function() {
-    return {
-      '/': { page: '/', _isDynamicError: true }
-    }
+  // Configure for App Router
+  generateBuildId: async () => {
+    // This makes the build ID deterministic to avoid issues with Cloudflare's caching
+    return 'anxiety-chat-build'
   }
 }
 

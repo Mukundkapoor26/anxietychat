@@ -15,6 +15,10 @@ import {
   shouldShowRemainingMessages
 } from "@/utils/message-limit"
 
+// Mark this page as dynamic (not statically generated)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Define types for our chat data
 type Message = {
   role: string
