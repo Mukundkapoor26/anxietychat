@@ -538,16 +538,44 @@ export default function GhibliChat() {
               chatSessions.map((chat) => (
                 <div
                   key={chat.id}
-                  onClick={() => switchChat(chat.id)}
                   className={cn(
                     "text-ghibli-beige font-copernicus cursor-pointer transition-colors py-1 group relative",
                     currentChatId === chat.id ? "text-white" : "hover:text-white"
                   )}
                 >
-                  <div className="flex justify-between items-center">
+                  <div 
+                    onClick={() => switchChat(chat.id)}
+                    className="flex justify-between items-center pr-8"
+                  >
                     <span className="truncate">{chat.title}</span>
                     <span className="text-xs font-medium ml-2 px-1.5 py-0.5 rounded bg-ghibli-medium-green/20">{formatDate(chat.updatedAt)}</span>
                   </div>
+                  
+                  {/* Three dots menu button */}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChatToDelete(chatToDelete === chat.id ? null : chat.id);
+                      }}
+                      className="p-1 hover:bg-ghibli-medium-green/20 rounded-full"
+                    >
+                      <MoreVertical size={16} className="text-ghibli-beige" />
+                    </button>
+                  </div>
+                  
+                  {/* Delete button that appears when three dots is clicked */}
+                  {chatToDelete === chat.id && (
+                    <div className="absolute right-0 top-full mt-1 bg-ghibli-dark-green/90 backdrop-blur-md rounded shadow-lg z-10 p-1">
+                      <button 
+                        onClick={(e) => deleteChat(chat.id, e)}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:bg-ghibli-medium-green/20 rounded w-full"
+                      >
+                        <Trash2 size={14} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
