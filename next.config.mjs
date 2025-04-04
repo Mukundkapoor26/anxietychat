@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Use static export for Cloudflare Pages
+  output: 'export',
   images: {
     unoptimized: true,
   },
@@ -10,17 +12,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Completely disable static generation
-  staticPageGenerationTimeout: 1000,
-  output: 'standalone',
+  // Ensure we handle localStorage safely
   experimental: {
-    appDocumentPreloading: false,
-    serverComponentsExternalPackages: ['react', 'react-dom']
-  },
-  // Configure for App Router
-  generateBuildId: async () => {
-    // This makes the build ID deterministic to avoid issues with Cloudflare's caching
-    return 'anxiety-chat-build'
+    appDocumentPreloading: false
   }
 }
 

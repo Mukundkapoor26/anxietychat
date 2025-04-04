@@ -4,9 +4,8 @@
     "environment": {
       "NODE_VERSION": "18",
       "NPM_FLAGS": "--legacy-peer-deps",
-      "NEXT_TELEMETRY_DISABLED": "1",
-      "NEXT_DISABLE_SOURCEMAPS": "1"
+      "NEXT_TELEMETRY_DISABLED": "1"
     },
-    "output_directory": ".next/standalone"
+    "output_directory": "dist"
   }
 }
