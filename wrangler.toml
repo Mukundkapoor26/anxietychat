@@ -1,0 +1,10 @@
+name = "anxietychat"
+compatibility_date = "2025-04-04"
+
+[site]
+bucket = "./out"
+
+[build]
+command = "npm run build"
+[build.upload]
+format = "pages" 

@@ -1,13 +1,13 @@
-name: Build Project
+name: Deploy to Cloudflare Pages
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    name: Build
+    name: Deploy
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -15,4 +15,12 @@ jobs:
           node-version: 18
           cache: 'npm'
       - run: npm ci
-      - run: npm run build 
+      - run: npm run build
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: anxietychat
+          directory: out
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }} 
