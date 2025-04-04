@@ -23,12 +23,14 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
+    webpackBuildWorker: false,
+    parallelServerBuildTraces: false,
+    parallelServerCompiles: false,
   },
-  // Cloudflare Pages configuration
+  // Cloudflare Pages static export configuration
   output: 'export',
+  distDir: 'out',
+  trailingSlash: true,
 }
 
 if (userConfig) {

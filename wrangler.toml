@@ -1,0 +1,6 @@
+name = "anxietychat"
+compatibility_date = "2025-04-04"
+main = "./out/_worker.js"
+
+[site]
+bucket = "./out" 

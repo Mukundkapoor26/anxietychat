@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "anxietychat",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "prebuild": "npm install",
+    "postbuild": "cp public/_redirects out/_redirects",
     "start": "next start",
     "lint": "next lint"
   },
