@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "node -v",
+    "prebuild": "rm -rf node_modules pnpm-lock.yaml package-lock.json && npm install",
     "start": "next start",
     "lint": "next lint"
   },
