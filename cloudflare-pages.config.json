@@ -1,9 +1,10 @@
 {
   "build": {
-    "command": "npm run build",
+    "command": "./build.sh",
     "output_directory": ".next",
     "environment": {
-      "NODE_VERSION": "18"
+      "NODE_VERSION": "18",
+      "NPM_FLAGS": "--legacy-peer-deps"
     }
   }
 }
