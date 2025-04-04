@@ -1,0 +1,30 @@
+{
+  "name": "AnxietyChat",
+  "short_name": "AnxietyChat",
+  "description": "Free AI-powered conversations to help manage anxiety and stress",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#4A6741",
+  "theme_color": "#4A6741",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/chat-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/chat-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["health", "mental health", "anxiety", "wellness"],
+  "screenshots": [
+    {
+      "src": "/twitter-image.png",
+      "sizes": "1200x630",
+      "type": "image/png"
+    }
+  ]
+} 
