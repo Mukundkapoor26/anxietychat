@@ -50,6 +50,8 @@ export default function AttributionDialog({ showOnWelcomePage = false }: Attribu
 
                 <p className="mb-4">
                   If AnxietyChat has helped you and you'd like to support its development, any contribution would mean the world to me. It will help cover the costs and allow me to keep improving this service.
+
+                  But remember, AnxietyChat is not a replacement for professional help. If you're feeling overwhelmed, please seek support from a qualified mental health professional, as AI is not a substitute for human interaction.
                 </p>
 
                 <div className="my-6">
