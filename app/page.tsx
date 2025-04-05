@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useCallback } from "react"
 import { Send, Menu, X, Plus, Music, Volume2, VolumeX, MoreVertical, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
@@ -96,25 +96,98 @@ export default function GhibliChat() {
     }
   }, [messages, sidebarOpen, showLimitNotice])
 
-  // Initialize message limit on component mount
-  useEffect(() => {
-    // Initialize message limit tracker
-    initMessageLimit();
+  // Add fingerprint generation function
+  const generateFingerprint = () => {
+    const screen = `${window.screen.width},${window.screen.height},${window.screen.colorDepth}`;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const language = navigator.language;
+    const platform = navigator.platform;
     
-    // Check if limit is already reached
-    const limitReached = hasReachedLimit();
-    setShowLimitNotice(limitReached);
-    
-    // Set current message count
-    setMessageCount(getMessageCount());
-    
-    // Log current status for debugging
-    console.log("Message limit status:", {
-      count: getMessageCount(),
-      remaining: getRemainingMessages(),
-      limitReached: hasReachedLimit()
+    return btoa(`${screen}-${timezone}-${language}-${platform}`);
+  };
+
+  // Add IndexedDB setup and handling
+  const setupMessageTracking = async () => {
+    return new Promise<void>((resolve, reject) => {
+      const request = window.indexedDB.open('messageLimit', 1);
+      
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('messages')) {
+          db.createObjectStore('messages', { keyPath: 'id' });
+        }
+      };
+      
+      request.onsuccess = (event: Event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        const today = new Date().toDateString();
+        const transaction = db.transaction(['messages'], 'readwrite');
+        const store = transaction.objectStore('messages');
+        
+        const getRequest = store.get('daily');
+        
+        getRequest.onsuccess = () => {
+          const data = getRequest.result;
+          if (!data || data.date !== today) {
+            // Reset for new day
+            store.put({ id: 'daily', date: today, count: 0 });
+            setMessageCount(0);
+          } else {
+            setMessageCount(data.count);
+          }
+          resolve();
+        };
+        
+        getRequest.onerror = () => {
+          console.error("Error accessing message limit data");
+          reject(new Error("Failed to access message limit data"));
+        };
+      };
+      
+      request.onerror = () => {
+        console.error("Error opening IndexedDB");
+        reject(new Error("Failed to open IndexedDB"));
+      };
     });
+  };
+
+  // Initialize message tracking on component mount
+  useEffect(() => {
+    // Fetch initial message count
+    fetch('/api/message-limit')
+      .then(res => res.json())
+      .then(data => {
+        setMessageCount(data.count);
+        setShowLimitNotice(data.count >= 20);
+      })
+      .catch(console.error);
   }, []);
+
+  const incrementMessageCount = useCallback(async () => {
+    try {
+      const response = await fetch('/api/message-limit', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        setMessageCount(data.count);
+        return !data.limitReached;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating message count:', error);
+      return false;
+    }
+  }, []);
+
+  const hasReachedLimit = useCallback(() => {
+    return messageCount >= 20;
+  }, [messageCount]);
+
+  const shouldShowRemainingMessages = useCallback(() => {
+    return messageCount > 0 && messageCount < 20;
+  }, [messageCount]);
 
   // Load chat sessions from localStorage on initial render
   useEffect(() => {
@@ -250,99 +323,93 @@ export default function GhibliChat() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!input.trim() || isLoading) return
     
-    // Check if the user has reached their message limit
-    if (hasReachedLimit()) {
-      setShowLimitNotice(true);
-      return;
-    }
+    if (hasReachedLimit()) return
+    
+    const input = inputRef.current
+    if (!input || !input.value.trim()) return
+    
+    const messageText = input.value.trim()
+    input.value = ''
 
     // Create a user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: messageText,
       role: "user",
       timestamp: new Date(),
     }
 
-    // Clear input
-    setInput("")
-
     // Update messages state
     const updatedMessages = [...messages, userMessage]
     setMessages(updatedMessages)
-
-    // Create new chat if this is the first message and no current chat exists
-    if (!currentChatId) {
-      const newChatId = `chat-${Date.now()}`
-      const newChat: ChatSession = {
-        id: newChatId,
-        title: generateChatTitle(userMessage.content),
-        messages: updatedMessages,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      
-      setCurrentChatId(newChatId)
-      setChatSessions(prev => [newChat, ...prev])
-      
-      // Save to localStorage immediately
-      const updatedSessions = [newChat, ...chatSessions];
-      setLocalStorage("chatSessions", updatedSessions);
-    } else {
-      // Find current chat
-      const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
-      let updatedChatSessions = [...chatSessions]
-
-      // If this is the first message in an existing chat, update the title
-      if (currentChat && currentChat.messages.length === 0) {
-        const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
-        if (chatIndex !== -1) {
-          updatedChatSessions[chatIndex] = {
-            ...updatedChatSessions[chatIndex],
-            title: generateChatTitle(userMessage.content),
-            messages: updatedMessages,
-            updatedAt: new Date(),
-          }
-          setChatSessions(updatedChatSessions)
-        }
-      } else if (currentChat) {
-        // Just update the messages and updatedAt
-        const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
-        if (chatIndex !== -1) {
-          updatedChatSessions[chatIndex] = {
-            ...updatedChatSessions[chatIndex],
-            messages: updatedMessages,
-            updatedAt: new Date(),
-          }
-          setChatSessions(updatedChatSessions)
-        }
-      }
-
-      // Save to local storage
-      setLocalStorage("chatSessions", updatedChatSessions)
-    }
-
-    // Scroll to bottom
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-
-    // Set loading state
-    setIsLoading(true)
-    setIsTyping(true)
-
-    // Increment message count and update state
-    const newCount = incrementMessageCount();
-    setMessageCount(newCount);
-    const newLimitReached = hasReachedLimit();
     
-    console.log("Message count updated:", {
-      newCount,
-      limitReached: newLimitReached
-    });
-
     try {
+      const canContinue = await incrementMessageCount()
+      if (!canContinue) {
+        setShowLimitNotice(true)
+        return
+      }
+
+      // Create new chat if this is the first message and no current chat exists
+      if (!currentChatId) {
+        const newChatId = `chat-${Date.now()}`
+        const newChat: ChatSession = {
+          id: newChatId,
+          title: generateChatTitle(messageText),
+          messages: updatedMessages,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        
+        setCurrentChatId(newChatId)
+        setChatSessions(prev => [newChat, ...prev])
+        
+        // Save to localStorage immediately
+        const updatedSessions = [newChat, ...chatSessions];
+        setLocalStorage("chatSessions", updatedSessions);
+      } else {
+        // Find current chat
+        const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
+        let updatedChatSessions = [...chatSessions]
+
+        // If this is the first message in an existing chat, update the title
+        if (currentChat && currentChat.messages.length === 0) {
+          const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
+          if (chatIndex !== -1) {
+            updatedChatSessions[chatIndex] = {
+              ...updatedChatSessions[chatIndex],
+              // Update title if this is a new chat
+              title: generateChatTitle(messageText),
+              messages: updatedMessages,
+              updatedAt: new Date(),
+            }
+            setChatSessions(updatedChatSessions)
+          }
+        } else if (currentChat) {
+          // Just update the messages and updatedAt
+          const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
+          if (chatIndex !== -1) {
+            updatedChatSessions[chatIndex] = {
+              ...updatedChatSessions[chatIndex],
+              messages: updatedMessages,
+              updatedAt: new Date(),
+            }
+            setChatSessions(updatedChatSessions)
+          }
+        }
+
+        // Save to local storage
+        setLocalStorage("chatSessions", updatedChatSessions)
+      }
+
+      // Scroll to bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+
+      // Set loading state
+      setIsLoading(true)
+      setIsTyping(true)
+
       // Send request to API
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -403,7 +470,7 @@ export default function GhibliChat() {
       }
       
       // Check limit after message sent
-      if (newLimitReached) {
+      if (hasReachedLimit()) {
         setShowLimitNotice(true);
       }
       
@@ -630,7 +697,7 @@ export default function GhibliChat() {
                 {shouldShowRemainingMessages() && (
                   <div className="fixed bottom-4 right-4 z-30">
                     <div className="text-xs bg-ghibli-beige-darker/60 text-ghibli-dark-green/70 font-copernicus px-3 py-1 rounded-full backdrop-blur-sm">
-                      {10 - messageCount} message{10 - messageCount !== 1 ? 's' : ''} remaining today
+                      {20 - messageCount} message{20 - messageCount !== 1 ? 's' : ''} remaining today
                     </div>
                   </div>
                 )}
@@ -777,7 +844,7 @@ export default function GhibliChat() {
                     {shouldShowRemainingMessages() && (
                       <div className="absolute -top-8 right-0">
                         <div className="text-xs bg-ghibli-beige-darker/60 text-ghibli-dark-green/70 font-copernicus px-3 py-1 rounded-full backdrop-blur-sm">
-                          {10 - messageCount} message{10 - messageCount !== 1 ? 's' : ''} remaining today
+                          {20 - messageCount} message{20 - messageCount !== 1 ? 's' : ''} remaining today
                         </div>
                       </div>
                     )}
