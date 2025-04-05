@@ -15,6 +15,7 @@ import {
   getRemainingMessages,
   shouldShowRemainingMessages
 } from "@/utils/message-limit"
+import AttributionDialog from "@/components/AttributionDialog"
 
 // Define types for our chat data
 type Message = {
@@ -790,6 +791,7 @@ export default function GhibliChat() {
           border-radius: 18px 18px 18px 4px;
         }
       `}</style>
+      <AttributionDialog showOnWelcomePage={messages.length === 0} />
     </div>
   )
 }

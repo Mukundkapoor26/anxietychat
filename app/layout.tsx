@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { JsonLd } from '../components/JsonLd'
+import localFont from 'next/font/local'
+
+const handwriting = localFont({
+  src: '../public/fonts/Caveat-Regular.woff2',
+  variable: '--font-handwriting',
+})
 
 export const viewport: Viewport = {
   themeColor: '#4A6741',
@@ -83,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className={handwriting.variable}>
         {children}
         <JsonLd />
       </body>
