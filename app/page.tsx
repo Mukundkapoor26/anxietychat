@@ -350,6 +350,39 @@ export default function GhibliChat() {
 
         const data = await response.json();
         setMessages(prev => [...prev, data]);
+
+        // Update the chat session with the new messages
+        setChatSessions(prev => {
+          const updatedSessions = prev.map(session => {
+            if (session.id === currentChatId) {
+              // If this is the first message, generate a title
+              if (session.messages.length === 0) {
+                session.title = generateChatTitle(newMessage.content);
+              }
+              return {
+                ...session,
+                messages: [...session.messages, newMessage, data],
+                updatedAt: new Date()
+              };
+            }
+            return session;
+          });
+          
+          // If no current chat session exists, create a new one
+          if (!currentChatId || !updatedSessions.find(s => s.id === currentChatId)) {
+            const newChat: ChatSession = {
+              id: `chat-${Date.now()}`,
+              title: generateChatTitle(newMessage.content),
+              messages: [newMessage, data],
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            setCurrentChatId(newChat.id);
+            return [newChat, ...updatedSessions];
+          }
+          
+          return updatedSessions;
+        });
       }
     } catch (error) {
       console.error('Error:', error);
