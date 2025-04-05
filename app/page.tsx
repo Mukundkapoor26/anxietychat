@@ -361,18 +361,25 @@ export default function GhibliChat() {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     const now = new Date();
     
-    // If date is within current month, show day only
-    if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-      return format(date, "d");
+    // If date is today, show "Today"
+    if (date.toDateString() === now.toDateString()) {
+      return "Today";
+    }
+    
+    // If date is yesterday, show "Yesterday"
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
     }
     
     // If date is within current year, show month and day
     if (date.getFullYear() === now.getFullYear()) {
-      return format(date, "MMM d");
+      return format(date, "MMMM d");
     }
     
     // Otherwise show full date
-    return format(date, "MMM d, yyyy");
+    return format(date, "MMMM d, yyyy");
   };
 
   // Format time for display
@@ -380,7 +387,7 @@ export default function GhibliChat() {
     if (!dateString) return "";
     // Ensure we have a Date object
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return format(date, "h:mm a");
+    return format(date, "h:mm a"); // e.g. "3:30 PM"
   };
 
   return (
@@ -539,16 +546,16 @@ export default function GhibliChat() {
                       value={input}
                       onChange={handleInputChange}
                       placeholder="Share what's on your mind..."
-                      className="w-full py-5 px-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus"
+                      className="w-full py-3 sm:py-5 pr-20 sm:pr-24 pl-4 sm:pl-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus text-sm sm:text-base"
                       disabled={showLimitNotice}
                     />
                     <button
                       type="submit"
                       disabled={isLoading || !input.trim() || showLimitNotice}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-2.5 px-5 font-copernicus flex items-center gap-2"
+                      className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-1.5 sm:py-2.5 px-3 sm:px-5 font-copernicus flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                     >
                       <span>Send</span>
-                      <Send className="h-4 w-4" />
+                      <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </button>
                   </div>
                 </div>
@@ -611,8 +618,8 @@ export default function GhibliChat() {
               }}
             />
             
-            {/* Messages container */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Messages container - adjusted padding and positioning */}
+            <div className="flex-1 overflow-y-auto pt-20">
               <div className="px-4 md:px-6 pb-36">
                 <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map((message) => (
@@ -662,7 +669,6 @@ export default function GhibliChat() {
                           <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '150ms' }}></div>
                           <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        {/* Add timestamp to make it look more like a real message */}
                         <div className="flex justify-end mt-1 text-xs text-ghibli-dark-green/70">
                           <span>{formatTime(new Date())}</span>
                         </div>
@@ -670,7 +676,7 @@ export default function GhibliChat() {
                     </div>
                   )}
                   
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} className="h-4" />
                 </div>
               </div>
             </div>
@@ -710,21 +716,21 @@ export default function GhibliChat() {
                     )}
                     
                     <div className="relative">
-                      <div className="relative rounded-full overflow-hidden backdrop-blur-sm bg-ghibli-beige-darker/70 shadow-md px-1">
+                      <div className="relative rounded-full overflow-hidden backdrop-blur-sm bg-ghibli-beige-darker/70 shadow-md">
                         <input
                           ref={inputRef}
                           value={input}
                           onChange={handleInputChange}
                           placeholder="Share what's on your mind..."
-                          className="w-full py-5 px-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus"
+                          className="w-full py-3 sm:py-5 pr-20 sm:pr-24 pl-4 sm:pl-6 bg-transparent border-none outline-none text-ghibli-dark-green placeholder:text-ghibli-dark-green/60 font-copernicus text-sm sm:text-base"
                         />
                         <button
                           type="submit"
                           disabled={isLoading || !input.trim()}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-2.5 px-5 font-copernicus flex items-center gap-2"
+                          className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 rounded-full bg-ghibli-medium-green/90 hover:bg-ghibli-medium-green text-ghibli-beige py-1.5 sm:py-2.5 px-3 sm:px-5 font-copernicus flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                         >
                           <span>Send</span>
-                          <Send className="h-4 w-4" />
+                          <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </div>
