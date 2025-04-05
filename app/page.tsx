@@ -86,7 +86,15 @@ export default function GhibliChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Auto-focus input field on mount and when messages change
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [messages, sidebarOpen, showLimitNotice])
 
   // Initialize message limit on component mount
   useEffect(() => {
@@ -548,8 +556,8 @@ export default function GhibliChat() {
                     <span className="text-xs font-medium ml-2 px-1.5 py-0.5 rounded bg-ghibli-medium-green/20">{formatDate(chat.updatedAt)}</span>
                   </div>
                   
-                  {/* Three dots menu button */}
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Three dots menu button - always visible on mobile */}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -589,9 +597,9 @@ export default function GhibliChat() {
       >
         {messages.length === 0 ? (
           // Welcome screen when no messages - centered vertically and horizontally
-          <div className="flex flex-col items-center justify-center h-screen p-4 pt-16 sm:pt-4">
+          <div className="flex flex-col items-center justify-center fixed inset-0 p-4">
             <div className="flex flex-col items-center w-full max-w-xl">
-              <h1 className="text-ghibli-dark-green text-4xl md:text-5xl font-copernicus font-medium tracking-tight text-center mb-10">
+              <h1 className="text-ghibli-dark-green text-3xl md:text-5xl font-copernicus font-medium tracking-tight text-center mb-8 md:mb-10">
                 How Are You Feeling Today?
               </h1>
 
@@ -600,6 +608,7 @@ export default function GhibliChat() {
                 <div className="relative">
                   <div className="relative rounded-full overflow-hidden backdrop-blur-sm bg-ghibli-beige-darker/70 shadow-md">
                     <input
+                      ref={inputRef}
                       value={input}
                       onChange={handleInputChange}
                       placeholder="Share what's on your mind..."
@@ -664,72 +673,97 @@ export default function GhibliChat() {
           </div>
         ) : (
           // Chat interface when conversation has started
-          <div className="flex-1 flex flex-col p-4 md:p-6 pt-16 sm:pt-4 relative">
-            {/* Chat messages */}
-            <div className="flex-1 overflow-auto pb-36">
-              <div className="max-w-3xl mx-auto space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}
-                  >
+          <div className="flex-1 flex flex-col h-screen relative">
+            {/* Fixed header gradient overlay */}
+            <div 
+              className="fixed top-0 left-0 right-0 h-24 pointer-events-none z-20"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(74, 108, 82, 0.9) 0%, rgba(74, 108, 82, 0.7) 30%, rgba(74, 108, 82, 0) 100%)',
+                marginLeft: sidebarOpen ? '18rem' : '0',
+                transition: 'margin-left 300ms'
+              }}
+            />
+            
+            {/* Messages container */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-4 md:px-6 pb-36">
+                <div className="max-w-3xl mx-auto space-y-4">
+                  {messages.map((message) => (
                     <div
-                      className={cn(
-                        "max-w-[80%] p-3 shadow-md backdrop-blur-sm font-copernicus relative",
-                        message.role === "user"
-                          ? "bg-ghibli-light-green/80 border border-ghibli-medium-green/60 text-ghibli-dark-green chat-bubble-right"
-                          : "bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left",
-                      )}
+                      key={message.id}
+                      className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}
                     >
-                      {message.content}
-                      
-                      {/* Time and double tick for user messages */}
-                      {message.role === "user" && (
-                        <div className="flex items-center justify-end mt-1 text-xs text-ghibli-dark-green/70 space-x-1">
-                          <span>{formatTime(message.timestamp)}</span>
-                          <div className="ml-1 relative">
-                            <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-ghibli-medium-green">
-                              <path d="M10.7 1L5.85 6.75L3.3 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M14.7 1L9.85 6.75L7.3 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                      <div
+                        className={cn(
+                          "max-w-[80%] p-3 shadow-md backdrop-blur-sm font-copernicus relative",
+                          message.role === "user"
+                            ? "bg-ghibli-light-green/80 border border-ghibli-medium-green/60 text-ghibli-dark-green chat-bubble-right"
+                            : "bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left",
+                        )}
+                      >
+                        {message.content}
+                        
+                        {/* Time and double tick for user messages */}
+                        {message.role === "user" && (
+                          <div className="flex items-center justify-end mt-1 text-xs text-ghibli-dark-green/70 space-x-1">
+                            <span>{formatTime(message.timestamp)}</span>
+                            <div className="ml-1 relative">
+                              <svg width="16" height="11" viewBox="0 0 16 11" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-ghibli-medium-green">
+                                <path d="M10.7 1L5.85 6.75L3.3 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M14.7 1L9.85 6.75L7.3 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
                           </div>
+                        )}
+                        
+                        {/* Time for assistant messages */}
+                        {message.role === "assistant" && (
+                          <div className="flex justify-end mt-1 text-xs text-ghibli-dark-green/70">
+                            <span>{formatTime(message.timestamp)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Typing indicator */}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[80%] p-4 shadow-md backdrop-blur-sm font-copernicus relative bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left">
+                        <div className="flex space-x-1.5 items-center min-h-[24px]">
+                          <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                      )}
-                      
-                      {/* Time for assistant messages */}
-                      {message.role === "assistant" && (
+                        {/* Add timestamp to make it look more like a real message */}
                         <div className="flex justify-end mt-1 text-xs text-ghibli-dark-green/70">
-                          <span>{formatTime(message.timestamp)}</span>
+                          <span>{formatTime(new Date())}</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Typing indicator */}
-                {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] p-4 shadow-md backdrop-blur-sm font-copernicus relative bg-ghibli-beige-darker/85 border border-ghibli-medium-green/50 text-ghibli-dark-green chat-bubble-left">
-                      <div className="flex space-x-1.5 items-center min-h-[24px]">
-                        <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-ghibli-dark-green/80 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      {/* Add timestamp to make it look more like a real message */}
-                      <div className="flex justify-end mt-1 text-xs text-ghibli-dark-green/70">
-                        <span>{formatTime(new Date())}</span>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
+                  )}
+                  
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
             </div>
 
             {/* Input form - fixed at bottom with no gradient */}
-            <div className="fixed bottom-0 left-0 right-0 pb-4 px-4 md:px-6 z-10">
-              <div className="max-w-3xl mx-auto w-full relative">
+            <div className={cn(
+              "fixed bottom-0 pb-4 px-2 md:px-4 z-10",
+              sidebarOpen ? "left-72 right-0" : "left-0 right-0"
+            )}>
+              {/* Dark gradient for mobile, image for desktop */}
+              <div className="absolute -bottom-4 left-0 right-0 h-40 bg-gradient-to-t from-ghibli-dark-green/95 via-ghibli-dark-green/60 to-transparent sm:hidden" />
+              <div 
+                className="absolute -bottom-4 left-0 right-0 h-20 hidden sm:block"
+                style={{
+                  background: `url('/ghibli-landscape-bottom.png')`,
+                  backgroundSize: '100% 100%'
+                }}
+              />
+              
+              <div className="max-w-4xl mx-auto w-full relative">
                 {/* Show message limit notice in chat mode */}
                 {showLimitNotice && (
                   <div className="mb-6">
@@ -749,8 +783,9 @@ export default function GhibliChat() {
                     )}
                     
                     <div className="relative">
-                      <div className="relative rounded-full overflow-hidden backdrop-blur-sm bg-ghibli-beige-darker/70 shadow-md">
+                      <div className="relative rounded-full overflow-hidden backdrop-blur-sm bg-ghibli-beige-darker/70 shadow-md px-1">
                         <input
+                          ref={inputRef}
                           value={input}
                           onChange={handleInputChange}
                           placeholder="Share what's on your mind..."
