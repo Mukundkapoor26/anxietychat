@@ -191,32 +191,22 @@ export default function GhibliChat() {
 
   // Load chat sessions from localStorage on initial render
   useEffect(() => {
-    if (!isBrowser()) return;
-    
-    try {
-      const storedSessions = getLocalStorage("chatSessions", []);
-      
-      if (Array.isArray(storedSessions) && storedSessions.length > 0) {
-        console.log("Loaded chat sessions:", storedSessions.length);
-        setChatSessions(storedSessions);
-        
-        // Load the most recent chat if available
-        const mostRecentChat = storedSessions.sort((a, b) => 
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )[0];
-        
-        setCurrentChatId(mostRecentChat.id);
-        
-        // Make sure we set the full message history
-        if (mostRecentChat.messages && Array.isArray(mostRecentChat.messages)) {
-          setMessages([...mostRecentChat.messages]);
-          console.log("Loaded messages for current chat:", mostRecentChat.messages.length);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading chat sessions:", error);
+    // Load chat sessions from localStorage
+    const storedSessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
+    if (storedSessions.length > 0) {
+      setChatSessions(storedSessions);
+      setCurrentChatId(storedSessions[0].id);
     }
   }, []);
+
+  useEffect(() => {
+    if (currentChatId) {
+      const mostRecentChat = chatSessions.find(chat => chat.id === currentChatId);
+      if (mostRecentChat) {
+        setMessages(mostRecentChat.messages);
+      }
+    }
+  }, [currentChatId, chatSessions]);
 
   // Save chat sessions to localStorage whenever they change
   useEffect(() => {
@@ -322,169 +312,37 @@ export default function GhibliChat() {
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (hasReachedLimit()) return
-    
-    const input = inputRef.current
-    if (!input || !input.value.trim()) return
-    
-    const messageText = input.value.trim()
-    input.value = ''
+    e.preventDefault();
+    if (!input.trim()) return;
 
-    // Create a user message
-    const userMessage: Message = {
+    const newMessage: Message = {
       id: Date.now().toString(),
-      content: messageText,
-      role: "user",
-      timestamp: new Date(),
-    }
+      content: input,
+      role: 'user',
+      timestamp: new Date()
+    };
 
-    // Update messages state
-    const updatedMessages = [...messages, userMessage]
-    setMessages(updatedMessages)
-    
+    setMessages(prev => [...prev, newMessage]);
+    setInput('');
+    setIsTyping(true); // Show typing indicator
+
     try {
-      const canContinue = await incrementMessageCount()
-      if (!canContinue) {
-        setShowLimitNotice(true)
-        return
-      }
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, newMessage] })
+      });
 
-      // Create new chat if this is the first message and no current chat exists
-      if (!currentChatId) {
-        const newChatId = `chat-${Date.now()}`
-        const newChat: ChatSession = {
-          id: newChatId,
-          title: generateChatTitle(messageText),
-          messages: updatedMessages,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-        
-        setCurrentChatId(newChatId)
-        setChatSessions(prev => [newChat, ...prev])
-        
-        // Save to localStorage immediately
-        const updatedSessions = [newChat, ...chatSessions];
-        setLocalStorage("chatSessions", updatedSessions);
-      } else {
-        // Find current chat
-        const currentChat = chatSessions.find((chat) => chat.id === currentChatId)
-        let updatedChatSessions = [...chatSessions]
+      if (!response.ok) throw new Error('Failed to get response');
 
-        // If this is the first message in an existing chat, update the title
-        if (currentChat && currentChat.messages.length === 0) {
-          const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
-          if (chatIndex !== -1) {
-            updatedChatSessions[chatIndex] = {
-              ...updatedChatSessions[chatIndex],
-              // Update title if this is a new chat
-              title: generateChatTitle(messageText),
-              messages: updatedMessages,
-              updatedAt: new Date(),
-            }
-            setChatSessions(updatedChatSessions)
-          }
-        } else if (currentChat) {
-          // Just update the messages and updatedAt
-          const chatIndex = chatSessions.findIndex((chat) => chat.id === currentChatId)
-          if (chatIndex !== -1) {
-            updatedChatSessions[chatIndex] = {
-              ...updatedChatSessions[chatIndex],
-              messages: updatedMessages,
-              updatedAt: new Date(),
-            }
-            setChatSessions(updatedChatSessions)
-          }
-        }
-
-        // Save to local storage
-        setLocalStorage("chatSessions", updatedChatSessions)
-      }
-
-      // Scroll to bottom
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-
-      // Set loading state
-      setIsLoading(true)
-      setIsTyping(true)
-
-      // Send request to API
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages: updatedMessages
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      console.log("Chat API response:", data);
-
-      // Create assistant message
-      const assistantMessage = {
-        role: "assistant",
-        content: data.content,
-        id: data.id || `assistant-${Date.now()}`,
-        timestamp: new Date(),
-      }
-
-      // Add assistant message to chat
-      const newMessages = [...updatedMessages, assistantMessage]
-      setMessages(newMessages)
-
-      // Find the current chat session index
-      let chatToUpdate = currentChatId;
-      
-      // If this is a new conversation (first message handled in the earlier condition)
-      if (chatToUpdate) {
-        // Update chat session with complete message history including assistant response
-        const updatedChatSessionsWithResponse = chatSessions.map(chat => {
-          if (chat.id === chatToUpdate) {
-            // If this is a new chat (has only one message before this), use the first user message to set title
-            const isNewChat = chat.messages.length <= 1;
-            const userFirstMessage = updatedMessages[0]?.content || '';
-            
-            return {
-              ...chat,
-              // Update title if this is a new chat
-              title: isNewChat ? generateChatTitle(userFirstMessage) : chat.title,
-              messages: newMessages,
-              updatedAt: new Date()
-            };
-          }
-          return chat;
-        });
-        
-        setChatSessions(updatedChatSessionsWithResponse);
-        
-        // Save to local storage
-        setLocalStorage("chatSessions", updatedChatSessionsWithResponse);
-      }
-      
-      // Check limit after message sent
-      if (hasReachedLimit()) {
-        setShowLimitNotice(true);
-      }
-      
+      const data = await response.json();
+      setMessages(prev => [...prev, data]);
     } catch (error) {
-      console.error("Error:", error)
+      console.error('Error sending message:', error);
     } finally {
-      setIsLoading(false)
-      setIsTyping(false)
-      // Scroll to bottom after a short delay to ensure the DOM has updated
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 100)
+      setIsTyping(false); // Hide typing indicator
     }
-  }
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -496,31 +354,33 @@ export default function GhibliChat() {
     setInput(promptText)
   }
 
-  // Format time as HH:MM AM/PM
-  const formatTime = (date?: Date) => {
-    if (!date) return "";
-    return format(date, "h:mm a");
-  };
-
-  // Format date for chat list
-  const formatDate = (date?: Date) => {
-    if (!date) return "";
-    // Get current date to compare
+  // Format date for display
+  const formatDate = (dateString: string | Date | undefined) => {
+    if (!dateString) return "";
+    // Ensure we have a Date object
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // If date is today, just show "Today"
-    if (date >= today) {
-      return "Today";
-    }
     
     // If date is within current month, show day only
     if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
       return format(date, "d");
     }
     
-    // Otherwise show month and day
-    return format(date, "MMM d");
+    // If date is within current year, show month and day
+    if (date.getFullYear() === now.getFullYear()) {
+      return format(date, "MMM d");
+    }
+    
+    // Otherwise show full date
+    return format(date, "MMM d, yyyy");
+  };
+
+  // Format time for display
+  const formatTime = (dateString: string | Date | undefined) => {
+    if (!dateString) return "";
+    // Ensure we have a Date object
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return format(date, "h:mm a");
   };
 
   return (
