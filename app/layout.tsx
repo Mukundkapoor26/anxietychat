@@ -16,12 +16,12 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'AnxietyChat | Free AI Assistant for Anxiety Support',
-  description: 'AnxietyChat offers free AI-powered conversations to help you manage anxiety, stress, and overwhelming thoughts. Talk to our compassionate AI assistant anytime, anywhere.',
+  title: 'AnxietyChat | Free AI Therapy Assistant for Anxiety & Mental Health',
+  description: 'AnxietyChat offers free AI conversations to help you manage anxiety, stress, depressionand overwhelming thoughts. Talk to our compassionate AI chat anytime, anywhere.',
   generator: 'Next.js',
   applicationName: 'AnxietyChat',
   referrer: 'origin-when-cross-origin',
-  keywords: ['anxiety AI chat', 'free anxiety AI chat', 'anxiety chat AI', 'anxiety helper', 'anxiety support', 'mental health AI', 'stress relief chat', 'overwhelming thoughts', 'AI mental wellness', 'anxiety management'],
+  keywords: ['anxiety AI chat', 'free anxiety AI chat', 'anxiety chat AI', 'anxiety helper', 'anxiety support', 'mental health AI', 'stress relief chat', 'overwhelming thoughts', 'AI mental wellness', 'anxiety management', 'free anxiety chat', 'ai mental health', 'free AI therapist chat', 'free AI therapist chatbot', 'free AI therapy chat'],
   authors: [{ name: 'AnxietyChat Team' }],
   creator: 'AnxietyChat',
   publisher: 'AnxietyChat',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://anxiety-chat.com'),
+  metadataBase: new URL('/'),
   alternates: {
     canonical: '/',
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'AnxietyChat | Free AI Assistant for Anxiety Support',
     description: 'Talk to our compassionate AI assistant anytime for help with anxiety, stress, and overwhelming thoughts. Free, private, and available 24/7.',
-    url: 'https://anxiety-chat.com',
+    url: '/',
     siteName: 'AnxietyChat',
     locale: 'en_US',
     type: 'website',
