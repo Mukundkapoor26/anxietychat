@@ -324,23 +324,36 @@ export default function GhibliChat() {
 
     setMessages(prev => [...prev, newMessage]);
     setInput('');
-    setIsTyping(true); // Show typing indicator
+    setIsTyping(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, newMessage] })
+      // First, increment the message count
+      const limitResponse = await fetch('/api/message-limit', {
+        method: 'POST'
       });
+      const limitData = await limitResponse.json();
+      
+      // Update message count and limit notice
+      setMessageCount(limitData.count);
+      setShowLimitNotice(limitData.limitReached);
 
-      if (!response.ok) throw new Error('Failed to get response');
+      // Only proceed with the chat if we haven't reached the limit
+      if (!limitData.limitReached) {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [...messages, newMessage] })
+        });
 
-      const data = await response.json();
-      setMessages(prev => [...prev, data]);
+        if (!response.ok) throw new Error('Failed to get response');
+
+        const data = await response.json();
+        setMessages(prev => [...prev, data]);
+      }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error:', error);
     } finally {
-      setIsTyping(false); // Hide typing indicator
+      setIsTyping(false);
     }
   };
 
