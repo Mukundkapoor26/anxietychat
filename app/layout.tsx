@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('/'),
+  metadataBase: new URL('https://anxiety-chat.com'),
   alternates: {
     canonical: '/',
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'AnxietyChat | Free AI Assistant for Anxiety Support',
     description: 'Talk to our compassionate AI assistant anytime for help with anxiety, stress, and overwhelming thoughts. Free, private, and available 24/7.',
-    url: '/',
+    url: 'https://anxiety-chat.com',
     siteName: 'AnxietyChat',
     locale: 'en_US',
     type: 'website',
